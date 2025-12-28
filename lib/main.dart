@@ -1,122 +1,186 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
-void main() {
+import 'core/constants/app_colors.dart';
+import 'core/constants/app_strings.dart';
+import 'core/theme/app_theme.dart';
+import 'features/auth/data/models/user_model.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/auth/presentation/pages/login_page.dart';
+import 'injection_container.dart' as di;
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Set system UI overlay style
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: AppColors.background,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
+
+  // Set preferred orientations
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  // Initialize Hive
+  await Hive.initFlutter();
+  
+  // Register Hive adapters
+  Hive.registerAdapter(UserModelAdapter());
+
+  // Initialize Supabase
+  await Supabase.initialize(
+    url: 'https://fyupzmlagkfvveqinqxt.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5dXB6bWxhZ2tmdnZlcWlucXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5Mjc3MDIsImV4cCI6MjA4MjUwMzcwMn0.dbXEl99Y9oAtcp-XhHvrCaaYo0TT0xIzuSLnSVglLpY',
+  );
+
+  // Initialize dependencies
+  await di.initDependencies();
+
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => di.sl<AuthBloc>()),
+      ],
+      child: MaterialApp(
+        title: AppStrings.appName,
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.darkTheme,
+        home: const AuthWrapper(),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+/// Wrapper to handle authentication state
+class AuthWrapper extends StatefulWidget {
+  const AuthWrapper({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<AuthWrapper> createState() => _AuthWrapperState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+class _AuthWrapperState extends State<AuthWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    // Check authentication status
+    context.read<AuthBloc>().add(AuthCheckRequested());
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    return BlocConsumer<AuthBloc, AuthState>(
+      listener: (context, state) {
+        // Handle auth state changes if needed
+      },
+      builder: (context, state) {
+        if (state is AuthLoading || state is AuthInitial) {
+          return const _SplashScreen();
+        }
+
+        if (state is AuthAuthenticated) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Home'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  onPressed: () {
+                    context.read<AuthBloc>().add(AuthLogoutRequested());
+                  },
+                ),
+              ],
+            ),
+            body: Center(
+              child: Text(
+                'Welcome, ${state.user.name}!',
+                style: const TextStyle(fontSize: 24),
+              ),
+            ),
+          );
+        }
+
+        return const LoginPage();
+      },
+    );
+  }
+}
+
+/// Splash screen shown during initial loading
+class _SplashScreen extends StatelessWidget {
+  const _SplashScreen();
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
+      backgroundColor: AppColors.background,
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+          children: [
+            // Logo
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.4),
+                    blurRadius: 30,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.storefront_rounded,
+                size: 48,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ShaderMask(
+              shaderCallback: (bounds) =>
+                  AppColors.primaryGradient.createShader(bounds),
+              child: const Text(
+                AppStrings.appName,
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 48),
+            const SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+              ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
