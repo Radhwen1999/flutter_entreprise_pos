@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_enterprise_pos/features/shell/presentation/pages/main_shell.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
@@ -9,6 +10,8 @@ import 'core/constants/app_strings.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/data/models/user_model.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/dashboard/presentation/bloc/dashboard_bloc.dart';
+
 import 'features/auth/presentation/pages/login_page.dart';
 import 'injection_container.dart' as di;
 
@@ -57,6 +60,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => di.sl<AuthBloc>()),
+        BlocProvider(create: (_) => di.sl<DashboardBloc>()),
       ],
       child: MaterialApp(
         title: AppStrings.appName,
@@ -96,25 +100,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         }
 
         if (state is AuthAuthenticated) {
-          return Scaffold(
-            appBar: AppBar(
-              title: const Text('Home'),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout),
-                  onPressed: () {
-                    context.read<AuthBloc>().add(AuthLogoutRequested());
-                  },
-                ),
-              ],
-            ),
-            body: Center(
-              child: Text(
-                'Welcome, ${state.user.name}!',
-                style: const TextStyle(fontSize: 24),
-              ),
-            ),
-          );
+          return const MainShell();
         }
 
         return const LoginPage();

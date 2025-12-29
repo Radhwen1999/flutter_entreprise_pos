@@ -14,6 +14,12 @@ import 'features/auth/domain/usecases/login_user.dart';
 import 'features/auth/domain/usecases/logout_user.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 
+// Dashboard
+import 'features/dashboard/data/datasources/dashboard_local_datasource.dart';
+import 'features/dashboard/data/repositories/dashboard_repository_impl.dart';
+import 'features/dashboard/domain/repositories/dashboard_repository.dart';
+import 'features/dashboard/domain/usecases/get_dashboard_data.dart';
+import 'features/dashboard/presentation/bloc/dashboard_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -66,5 +72,30 @@ Future<void> initDependencies() async {
       logoutUser: sl(),
       getCurrentUser: sl(),
     ),
+  );
+
+  // ═══════════════════════════════════════════════════════════════
+  // DASHBOARD FEATURE
+  // ═══════════════════════════════════════════════════════════════
+
+  // Data sources
+  sl.registerLazySingleton<DashboardLocalDataSource>(
+        () => DashboardLocalDataSourceImpl(),
+  );
+
+  // Repository
+  sl.registerLazySingleton<DashboardRepository>(
+        () => DashboardRepositoryImpl(
+      localDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => GetDashboardData(sl()));
+
+  // Bloc
+  sl.registerFactory(
+        () => DashboardBloc(getDashboardData: sl()),
   );
 }

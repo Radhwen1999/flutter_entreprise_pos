@@ -20,8 +20,10 @@ class AppStrings {
   static const String todaysSales = "Today's Sales";
   static const String totalOrders = 'Total Orders';
   static const String avgOrderValue = 'Avg Order';
+  static const String totalRevenue = 'Total Revenue';
   static const String revenue = 'Revenue';
   static const String salesOverview = 'Sales Overview';
+  static const String last7Days = 'Last 7 days';
   static const String topProducts = 'Top Products';
   static const String lowStockAlerts = 'Low Stock';
   static const String newSale = 'New Sale';
@@ -40,6 +42,9 @@ class AppStrings {
   static const String today = 'Today';
   static const String thisWeek = 'This Week';
   static const String thisMonth = 'This Month';
+  static const String perDay = 'Per Day';
+  static const String perWeek = 'Per Week';
+  static const String perMonth = 'Per Month';
   static const String statusPending = 'Pending';
   static const String statusProcessing = 'Processing';
   static const String statusCompleted = 'Completed';
@@ -58,6 +63,8 @@ class AppStrings {
   static const String cancel = 'Cancel';
   static const String delete = 'Delete';
   static const String seeAll = 'See All';
+  static const String viewAll = 'View All';
+  static const String retry = 'Retry';
   static const String settings = 'Settings';
   static const String logout = 'Logout';
   static const String currencySymbol = '\$';
