@@ -22,6 +22,10 @@ import 'features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'features/dashboard/domain/usecases/get_dashboard_data.dart';
 import 'features/dashboard/presentation/bloc/dashboard_bloc.dart';
 
+// Products
+import 'features/products/data/datasources/products_local_datasource.dart';
+import 'features/products/presentation/bloc/products_bloc.dart';
+
 
 // Settings
 import 'features/settings/data/datasources/settings_local_datasource.dart';
@@ -106,6 +110,21 @@ Future<void> initDependencies() async {
   sl.registerFactory(
         () => DashboardBloc(getDashboardData: sl()),
   );
+  // ═══════════════════════════════════════════════════════════════
+  // PRODUCTS FEATURE
+  // ═══════════════════════════════════════════════════════════════
+
+  // Data sources
+  sl.registerLazySingleton<ProductsLocalDataSource>(
+        () => ProductsLocalDataSourceImpl(),
+  );
+
+  // Bloc
+  sl.registerFactory(
+        () => ProductsBloc(localDataSource: sl()),
+  );
+
+
 
   // ═══════════════════════════════════════════════════════════════
   // SETTINGS FEATURE

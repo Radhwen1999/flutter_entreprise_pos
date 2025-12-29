@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_enterprise_pos/features/products/presentation/bloc/products_bloc.dart';
 import 'package:flutter_enterprise_pos/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:flutter_enterprise_pos/features/shell/presentation/pages/main_shell.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -62,6 +63,7 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider(create: (_) => di.sl<AuthBloc>()),
         BlocProvider(create: (_) => di.sl<DashboardBloc>()),
+        BlocProvider(create: (_) => di.sl<ProductsBloc>()),
         BlocProvider(create: (_) => di.sl<SettingsBloc>()),
       ],
       child: MaterialApp(
