@@ -253,7 +253,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               child: _LiveStatCard(
                 title: "Today's Sales",
                 value: CurrencyFormatter.formatUSD(_liveSales),
-                icon: Iconsax.dollar_circle5,
+                icon: Iconsax.money,
                 gradient: AppColors.primaryGradient,
               ),
             ),

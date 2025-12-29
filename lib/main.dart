@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_enterprise_pos/features/orders/presentation/bloc/orders_bloc.dart';
 import 'package:flutter_enterprise_pos/features/products/presentation/bloc/products_bloc.dart';
 import 'package:flutter_enterprise_pos/features/settings/presentation/bloc/settings_bloc.dart';
 import 'package:flutter_enterprise_pos/features/shell/presentation/pages/main_shell.dart';
@@ -44,8 +45,8 @@ void main() async {
 
   // Initialize Supabase
   await Supabase.initialize(
-    url: 'https://fyupzmlagkfvveqinqxt.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5dXB6bWxhZ2tmdnZlcWlucXh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY5Mjc3MDIsImV4cCI6MjA4MjUwMzcwMn0.dbXEl99Y9oAtcp-XhHvrCaaYo0TT0xIzuSLnSVglLpY',
+    url: '',
+    anonKey: '',
   );
 
   // Initialize dependencies
@@ -64,6 +65,7 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => di.sl<AuthBloc>()),
         BlocProvider(create: (_) => di.sl<DashboardBloc>()),
         BlocProvider(create: (_) => di.sl<ProductsBloc>()),
+        BlocProvider(create: (_) => di.sl<OrdersBloc>()),
         BlocProvider(create: (_) => di.sl<SettingsBloc>()),
       ],
       child: MaterialApp(

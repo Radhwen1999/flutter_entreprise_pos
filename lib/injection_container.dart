@@ -26,6 +26,10 @@ import 'features/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'features/products/data/datasources/products_local_datasource.dart';
 import 'features/products/presentation/bloc/products_bloc.dart';
 
+// Orders
+import 'features/orders/data/datasources/orders_local_datasource.dart';
+import 'features/orders/presentation/bloc/orders_bloc.dart';
+
 
 // Settings
 import 'features/settings/data/datasources/settings_local_datasource.dart';
@@ -122,6 +126,20 @@ Future<void> initDependencies() async {
   // Bloc
   sl.registerFactory(
         () => ProductsBloc(localDataSource: sl()),
+  );
+
+  // ═══════════════════════════════════════════════════════════════
+  // ORDERS FEATURE
+  // ═══════════════════════════════════════════════════════════════
+
+  // Data sources
+  sl.registerLazySingleton<OrdersLocalDataSource>(
+        () => OrdersLocalDataSourceImpl(),
+  );
+
+  // Bloc
+  sl.registerFactory(
+        () => OrdersBloc(localDataSource: sl()),
   );
 
 
