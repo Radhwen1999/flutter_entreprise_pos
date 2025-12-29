@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_enterprise_pos/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:flutter_enterprise_pos/features/settings/presentation/pages/settings_page.dart';
 import '../../../../../core/constants/app_colors.dart';
 
 import '../widgets/custom_bottom_nav.dart';
@@ -17,7 +18,10 @@ class _MainShellState extends State<MainShell> {
 
   final List<Widget> _pages = const [
     DashboardPage(),
-
+    Scaffold(),
+    Scaffold(),
+    Scaffold(),
+    SettingsPage()
   ];
 
   void _onTabChanged(int index) {

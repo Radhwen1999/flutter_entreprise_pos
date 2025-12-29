@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter_enterprise_pos/core/services/biometric_service.dart' show BiometricService;
 import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -21,6 +22,11 @@ import 'features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'features/dashboard/domain/usecases/get_dashboard_data.dart';
 import 'features/dashboard/presentation/bloc/dashboard_bloc.dart';
 
+
+// Settings
+import 'features/settings/data/datasources/settings_local_datasource.dart';
+import 'features/settings/presentation/bloc/settings_bloc.dart';
+
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
@@ -38,6 +44,8 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<NetworkInfo>(
     () => NetworkInfoImpl(connectivity: sl()),
   );
+
+  sl.registerLazySingleton(() => BiometricService());
 
   // ═══════════════════════════════════════════════════════════════
   // AUTH FEATURE
@@ -97,5 +105,22 @@ Future<void> initDependencies() async {
   // Bloc
   sl.registerFactory(
         () => DashboardBloc(getDashboardData: sl()),
+  );
+
+  // ═══════════════════════════════════════════════════════════════
+  // SETTINGS FEATURE
+  // ═══════════════════════════════════════════════════════════════
+
+  // Data sources
+  sl.registerLazySingleton<SettingsLocalDataSource>(
+        () => SettingsLocalDataSourceImpl(),
+  );
+
+  // Bloc
+  sl.registerFactory(
+        () => SettingsBloc(
+      localDataSource: sl(),
+      biometricService: sl(),
+    ),
   );
 }

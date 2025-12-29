@@ -4,12 +4,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/services/biometric_service.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../domain/entities/user.dart';
 import '../bloc/auth_bloc.dart';
 import '../widgets/role_selector.dart';
 import '../widgets/animated_background.dart';
+import '../widgets/biometric_button.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -22,8 +24,13 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _biometricService = BiometricService();
+  
   UserRole _selectedRole = UserRole.manager;
   bool _rememberMe = false;
+  bool _biometricAvailable = false;
+  bool _biometricEnabled = false;
+  String? _biometricType;
 
   @override
   void initState() {
@@ -31,6 +38,28 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     // Pre-fill demo credentials
     _emailController.text = 'manager@pos.com';
     _passwordController.text = 'manager123';
+    _checkBiometricAvailability();
+  }
+
+  Future<void> _checkBiometricAvailability() async {
+    final canCheck = await _biometricService.canCheckBiometrics();
+    
+    if (canCheck) {
+      String? type;
+      if (await _biometricService.hasFaceIdSupport()) {
+        type = 'face';
+      } else if (await _biometricService.hasFingerprintSupport()) {
+        type = 'fingerprint';
+      }
+      
+      setState(() {
+        _biometricAvailable = true;
+        _biometricType = type;
+        // Check if user previously enabled biometric
+        // In production, this would come from secure storage
+        _biometricEnabled = true; // For demo, always show if available
+      });
+    }
   }
 
   @override
@@ -71,6 +100,40 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
               role: _selectedRole,
             ),
           );
+    }
+  }
+
+  Future<void> _onBiometricLogin() async {
+    final result = await _biometricService.authenticate(
+      reason: 'Authenticate to login to POS System',
+    );
+
+    if (result.success) {
+      // Biometric auth successful, login with cached credentials
+      // In production, you would retrieve encrypted credentials here
+      if (mounted) {
+        context.read<AuthBloc>().add(
+              AuthLoginRequested(
+                email: _emailController.text.trim(),
+                password: _passwordController.text,
+                role: _selectedRole,
+              ),
+            );
+      }
+    } else {
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -129,6 +192,12 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
 
                       // Login form
                       _buildLoginForm(),
+
+                      // Biometric login button
+                      if (_biometricAvailable && _biometricEnabled) ...[
+                        const SizedBox(height: 24),
+                        _buildBiometricSection(),
+                      ],
 
                       const SizedBox(height: 40),
 
@@ -301,7 +370,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Text(
+                        Text(
                           AppStrings.rememberMe,
                           style: TextStyle(
                             color: AppColors.textSecondary,
@@ -320,7 +389,7 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
                   },
                   child: Text(
                     AppStrings.forgotPassword,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.primary,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -349,11 +418,51 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
     ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2);
   }
 
+  Widget _buildBiometricSection() {
+    return Column(
+      children: [
+        // Divider with "or"
+        Row(
+          children: [
+            Expanded(
+              child: Divider(
+                color: AppColors.surfaceBorder,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'or',
+                style: TextStyle(
+                  color: AppColors.textTertiary,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Divider(
+                color: AppColors.surfaceBorder,
+              ),
+            ),
+          ],
+        ),
+        
+        const SizedBox(height: 24),
+
+        // Biometric button
+        BiometricButton(
+          type: _biometricType ?? 'fingerprint',
+          onPressed: _onBiometricLogin,
+        ),
+      ],
+    ).animate().fadeIn(delay: 400.ms);
+  }
+
   Widget _buildDemoInfo() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.info,
+        color: AppColors.info.withAlpha(10),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: AppColors.info.withOpacity(0.3),
@@ -361,14 +470,14 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
       ),
       child: Column(
         children: [
-          const Row(
+          Row(
             children: [
               Icon(
                 Iconsax.info_circle,
                 color: AppColors.info,
                 size: 20,
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Text(
                 'Demo Credentials',
                 style: TextStyle(
@@ -391,6 +500,6 @@ class _LoginPageState extends State<LoginPage> with TickerProviderStateMixin {
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 400.ms);
+    ).animate().fadeIn(delay: 500.ms);
   }
 }

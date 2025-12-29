@@ -28,6 +28,8 @@ dependencies:
   dartz: ^0.10.1
   rxdart: ^0.28.0
   cupertino_icons: ^1.0.8
+  local_auth: ^2.3.0
+
 
 dev_dependencies:
   flutter_test:
